@@ -5,7 +5,13 @@ Raspberry / Ubuntu 20.04.1 LTS SystemD service script.
 ## Prerequisis
 
 Have Python3 with vitual env (see https://news.julien-anne.fr/ubuntu-20-04-python3-et-virtualenv-installation-et-erreurs-potentielles/)
-Then adapt the path in the service file:
+Then adapt the path in the service file `webhool-bot.service` and the `ExecStart` command:
+
+```
+[Service]
+Type=simple
+ExecStart=/home/youruser/virtualenvpath/bin/python3 -u /home/youruser/virtualenvpath/tradingview-webhooks-bot/webhook-bot.py
+```
 
 Copy the service file `webhool-bot.service` in `/lib/systemd/system/`
 
