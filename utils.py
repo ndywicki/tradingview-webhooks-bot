@@ -9,5 +9,9 @@ def close_all_on_symbol(exchange, symbol):
         if pos['future'] == symbol and pos['entryPrice'] != None: 
                 pprint(pos)
                 print('Ok close position for', symbol)
-                closeOrder = exchange.createOrder(pos['future'], 'market', 'buy' if pos['side']=='sell' else 'sell', pos['openSize'])
+                closeOrder = exchange.createOrder(pos['future'], 
+                    'market', 
+                    'buy' if pos['side']=='sell' else 'sell', 
+                    pos['openSize'],
+                    params={'reduceOnly': True})
                 print("Close order result:", closeOrder)
