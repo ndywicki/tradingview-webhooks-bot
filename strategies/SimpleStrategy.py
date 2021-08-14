@@ -6,6 +6,9 @@ import utils
 
 STRATEGY_NAME='simple-strategy'
 
+# Store the minimal market price size to reduce API calls with call of exchange.publicGetMarketsMarketName()
+FTX_MARKET_MINSIZE = {'BTC-PERP': 0.001, 'BNB-PERP': 0.1, 'FTT-PERP': 0.1, 'DOGE-PERP': 1.0, 'MATIC-PERP': 1.0, 'ADA-PERP': 1.0}
+
 def process(data):
     """
     This function apply simple strategy of buy/sell at tradingview alert signal.
@@ -66,7 +69,9 @@ def process(data):
     type = data['type']
     side = data['side']
     amount = round(amountInUSD/ask, 4)
-    print("Amout BTC:", amount)
+    minProvideSize = FTX_MARKET_MINSIZE[symbol]
+    if amount < minProvideSize: amount = minProvideSize
+    print("Amout for", symbol, ":", amount)
     order = exchange.createOrder(symbol, type, side, amount)
     print("createOrder:")
     pprint(order)
