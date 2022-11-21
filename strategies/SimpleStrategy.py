@@ -1,15 +1,12 @@
 import os
-import ccxt
 import ast
-from pprint import pprint
 import utils
 
 STRATEGY_NAME='simple-strategy'
 
-# Store the minimal market price size to reduce API calls with call of exchange.publicGetMarketsMarketName()
-FTX_MARKET_MINSIZE = {'BTC-PERP': 0.001, 'BNB-PERP': 0.1, 'FTT-PERP': 0.1, 'DOGE-PERP': 1.0, 'MATIC-PERP': 1.0, 'ADA-PERP': 1.0}
+log = utils.getLogger()
 
-def process(data):
+def process(exchange, data):
     """
     This function apply simple strategy of buy/sell at tradingview alert signal.
     First close all open positions on the symbole then buy or sell order to FTX.
@@ -18,60 +15,64 @@ def process(data):
     """
     # Check if is the right strategy
     if 'strategy' not in data or data['strategy'] != STRATEGY_NAME :
-        print('Skip this is not the', STRATEGY_NAME)
-        return 
+        log.info(f'Skip this is not the {STRATEGY_NAME}')
+        return
 
-    API_KEY = os.getenv('API_KEY')
-    API_SECRET = os.getenv('API_SECRET')
-    SUBACCOUNT = data['subAccount'] if 'subAccount' in data else os.getenv('DEFAULT_SUBACCOUNT')
-    
-    exchange = ccxt.ftx({
-        'enableRateLimit': True,
-        'apiKey': API_KEY,
-        'secret': API_SECRET,
-        'headers': {
-            'FTX-SUBACCOUNT': SUBACCOUNT,
-        },
-    })
+    # Check input params
+    if data['type'] == 'limit':
+        if 'price' not in data:
+            log.error('Requires a price argument for limit orders')
+            return
 
     # Percent of balance used
     percentBalance = float(os.getenv('PERCENT_BALANCE'))
 
-    # Map symbol to FTX symbol
-    symbol = data['symbol']
-    symbol = symbol[0:symbol.index('PERP')] + '-PERP'
+    # Get the market & symbol
+    market = data['market']
+    symbol = exchange.safe_symbol(market)
+    log.info(f'Market: {market} symbol: {symbol}')
+    minPriceSize = float(exchange.markets[symbol]['info']['lot_size_filter']['min_trading_qty'])
+    precision = float(exchange.markets[symbol]['info']['lot_size_filter']['qty_step'])
+
+    # Get current ticker data
+    ticker = exchange.fetch_ticker(symbol)
+
     # Balance
     funds = exchange.fetchBalance()
-    balanceFreeUSD = funds['USD']['free']
-    print('USD balance free:', balanceFreeUSD)
-    # Current symbol market prices
-    ask = float(exchange.markets[symbol]['info']['ask'])
-    bid = float(exchange.markets[symbol]['info']['bid'])
-    print("ask:", ask, " bid:", bid, " spread:", (ask-bid))
+    balanceFreeUSD = funds['USDT']['free']
+    log.info(f'USD balance free: {balanceFreeUSD}')
+    # Current market prices
+    ask = float(ticker['ask'])
+    bid = float(ticker['bid'])
+    log.info(f'ask: {ask} bid: {bid} spread: {ask-bid}')
     amountInUSD = round(balanceFreeUSD * (percentBalance/100), 4)
-    # Use leverage ?
+
+    # # Use leverage? (not available on SPOT markets)
     if 'useLeverage' in data and data['useLeverage'] == 'true':
-        # Get account leverage
-        account = exchange.privateGetAccount()
-        leverage = account['result']['leverage']
-        print("Use leverage:", leverage)
+        # Get leverage by fetching position, even if no positions, bybit return dummy pos...
+        positions = exchange.fetch_positions()
+        leverage = positions[0]['info']['leverage']
+        log.info(f'Use leverage: {leverage}')
         amountInUSD *= float(leverage)
-    
-    print("AmoundInUSD:", amountInUSD)
 
-    # Close all positions for the symbol
-    utils.close_all_on_symbol(exchange, symbol)
+    log.info(f'AmoundInUSD: {amountInUSD}')
 
-    print('==============')
-    print('Open position')
-    print('==============')
+    activeOrders = utils.get_active_orders_on_symbol(exchange, market)
+    # Close all active orders for the symbol
+    if activeOrders:
+        utils.close_all_orders_on_symbol(exchange, symbol)
+    # Close all positions & pending orders for the symbol
+    utils.close_all_positions_on_symbol(exchange, symbol)
+
+    log.info('Open position.')
     # Create order
     type = data['type']
     side = data['side']
-    amount = round(amountInUSD/ask, 4)
-    minProvideSize = FTX_MARKET_MINSIZE[symbol]
-    if amount < minProvideSize: amount = minProvideSize
-    print("Amout for", symbol, ":", amount)
-    order = exchange.createOrder(symbol, type, side, amount)
-    print("createOrder:")
-    pprint(order)
+    price = None
+    if type == 'limit':
+        price = float(data['price'])
+    amount = round(amountInUSD/ask, 4) if round(amountInUSD/ask, 4) > minPriceSize else minPriceSize
+    log.info(f'Amount for {symbol} : {amount}')
+    params = { 'position_idx': 0}
+    order = exchange.createOrder(symbol, type, side, amount, price, params)
+    log.info(f'createOrder id: {order['id']}')

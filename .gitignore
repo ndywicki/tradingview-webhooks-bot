@@ -3,6 +3,7 @@
 ######################
 /debug
 .env
+.venv
 __pycache__/
 
 

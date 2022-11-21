@@ -14,13 +14,12 @@ pip3 install -r requirements.txt
 
 # Configuration
 
-To use your own FTX API credentials create an `.env` file in the root project directory with the content:
+To use your own BYBIT API credentials create an `.env` file in the root project directory with the content:
 
 ```bash
 PIN=Set this to something unique
 API_KEY=YOUR_API_KEY
 API_SECRET=YOUR_API_SECRET
-DEFAULT_SUBACCOUNT=YOUR_DEFAUT_FTX_SUBACCOUNT
 PERCENT_BALANCE=90 # Percentage of your wallet balance used (without leverage) to open order
 ```
 
@@ -54,8 +53,8 @@ You can create your own strategy and add the process call in `webhook-bot.py`:
 ```python
 if get_token() == data['key']:
     print('POST Received:', data)
-    SimpleStrategy.process(data)
-    YourOwnStrategy.process(data)
+    SimpleStrategy.process(exchange, data)
+    YourOwnStrategy.process(exchange, data)
     return '', 200
 ```
 
@@ -64,12 +63,18 @@ if get_token() == data['key']:
 You can use this alert message sample to create a basic alert for the `SimpleStrategy`
 
 ```json
-{"subAccount": "my-subaccount",  "strategy": "simple-strategy", "type": "market", "side": "{{strategy.order.action}}" , "amount": "10", "symbol": "{{ticker}}" , "price": "{{strategy.order.price}}" , "orderId": "{{strategy.order.id}}", "contracts": "{{strategy.order.contracts}}", "positions.size": "{{strategy.position_size}}", "comment": {}, "key": "yourkey"}
+{
+	"strategy": "simple-strategy",
+	"type": "market",
+	"side": "{{strategy.order.action}}",
+	"symbol": "{{ticker}}",
+	"price": "{{strategy.order.price}}",
+	"key": "yourkey"
+}
 ```
 
 With:
 
-* `subAccount`: The FTX subaccount if you want use another than the default.
 * `strategy`: The name of strategy to use if you have many strategies
 * `key`: The API key that match the encoded pin in `auth.py`
 * Other params come from the TradingView alert placeholders see https://www.tradingview.com/support/solutions/43000531021-how-to-use-a-variable-value-in-alert/
