@@ -17,6 +17,7 @@ pip3 install -r requirements.txt
 To use your own FTX API credentials create an `.env` file in the root project directory with the content:
 
 ```bash
+PIN=Set this to something unique
 API_KEY=YOUR_API_KEY
 API_SECRET=YOUR_API_SECRET
 DEFAULT_SUBACCOUNT=YOUR_DEFAUT_FTX_SUBACCOUNT
@@ -26,7 +27,12 @@ PERCENT_BALANCE=90 # Percentage of your wallet balance used (without leverage) t
 ## API key
 
 A basic API key check is purpose to secure at least.
-See `auth.py` and choose your pin value.
+Once your PIN secret code is set you can display the generate value:
+```
+(virtualenv)> python3 auth.py 
+```
+
+The `key` value should be set in the HTTP json payload (see below)
 
 # Running
 

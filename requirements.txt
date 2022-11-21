@@ -1,4 +1,3 @@
-ccxt==1.50.24
-ccxtpro==1.0.1
-flask==2.0.1
-python-dotenv==0.19.0
+ccxt==2.1.99
+flask==2.2.2
+python-dotenv==0.21.0
