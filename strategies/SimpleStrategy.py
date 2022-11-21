@@ -75,4 +75,4 @@ def process(exchange, data):
     log.info(f'Amount for {symbol} : {amount}')
     params = { 'position_idx': 0}
     order = exchange.createOrder(symbol, type, side, amount, price, params)
-    log.info(f'createOrder id: {order['id']}')
+    log.info(f"createOrder id: {order['id']}")
