@@ -3,7 +3,7 @@
 This webhook bot handle HTTP requests sent by [TradingView](https://tradingview.com/) alerts that are base on yours indicators or strategies.
 The default market exhange broker is [ByBit](https://www.bybit.com/en-US/invite?ref=YMPJKN%230) and especially for PERPetual crypto futures market.
 
-You can create ByBit account with my referral code `YMPJKN#0` to gain ZERO-fee Spot trading and earn up to 250 USDT.
+You can create a ByBit account with my referral code `YMPJKN#0` to gain ZERO-fee Spot trading and earn up to 250 USDT.
 
 # Prerequisis
 
